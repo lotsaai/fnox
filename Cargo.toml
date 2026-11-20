@@ -17,7 +17,7 @@ rust-version = "1.91.1"
 [workspace.dependencies]
 cc = "1"
 aes-gcm = "0.11.0-rc.3"
-age = { version = "0.12", features = ["armor", "ssh", "plugin", "cli-common"] }
+age = { git = "https://github.com/lotsaai/rage", branch = "fix/rsa-0.10", features = ["armor", "ssh", "plugin", "cli-common"] }
 aho-corasick = "1"
 anyhow = "1"
 arboard = "3"
