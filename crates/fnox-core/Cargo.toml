@@ -128,4 +128,5 @@ toml_edit = { workspace = true }
 
 [dev-dependencies]
 axum = { workspace = true }
+k8s-openapi = { workspace = true, features = ["v1_33"] }
 tempfile = { workspace = true }
