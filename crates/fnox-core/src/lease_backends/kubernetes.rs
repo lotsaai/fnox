@@ -128,14 +128,24 @@ impl LeaseBackend for KubernetesBackend {
                 })?;
         let namespace = self.namespace.clone().unwrap_or(default_namespace);
 
-        let request = TokenRequest {
-            spec: TokenRequestSpec {
-                audiences: self.audiences.clone(),
-                expiration_seconds: Some(duration.as_secs() as i64),
-                ..Default::default()
-            },
+        let spec = TokenRequestSpec {
+            expiration_seconds: Some(duration.as_secs() as i64),
             ..Default::default()
         };
+        // Kubernetes 1.36 made TokenRequest's spec, audiences, token and
+        // expirationTimestamp optional in the generated types.
+        k8s_openapi::k8s_if_le_1_35! {
+            let request = TokenRequest {
+                spec: TokenRequestSpec { audiences: self.audiences.clone(), ..spec },
+                ..Default::default()
+            };
+        }
+        k8s_openapi::k8s_if_ge_1_36! {
+            let request = TokenRequest {
+                spec: Some(TokenRequestSpec { audiences: Some(self.audiences.clone()), ..spec }),
+                ..Default::default()
+            };
+        }
         let api: Api<ServiceAccount> = Api::namespaced(client, &namespace);
         let response = api
             .create_token_request(&self.service_account, &PostParams::default(), &request)
@@ -151,19 +161,34 @@ impl LeaseBackend for KubernetesBackend {
                 url: URL.to_string(),
             })?;
 
+        k8s_openapi::k8s_if_le_1_35! {
+            let (token, expiration_timestamp) = (status.token, status.expiration_timestamp);
+        }
+        k8s_openapi::k8s_if_ge_1_36! {
+            let missing = |field: &str| FnoxError::ProviderInvalidResponse {
+                provider: PROVIDER.to_string(),
+                details: format!("Response missing '{field}'"),
+                hint: "Unexpected response from the Kubernetes API server".to_string(),
+                url: URL.to_string(),
+            };
+            let token = status.token.ok_or_else(|| missing("token"))?;
+            let expiration_timestamp = status
+                .expiration_timestamp
+                .ok_or_else(|| missing("expirationTimestamp"))?;
+        }
+
         // The API server may grant a different lifetime than requested, so
         // record the expiry it reports.
-        let expires_at =
-            chrono::DateTime::from_timestamp(status.expiration_timestamp.0.as_second(), 0)
-                .ok_or_else(|| FnoxError::ProviderInvalidResponse {
-                    provider: PROVIDER.to_string(),
-                    details: "Response has an invalid 'expirationTimestamp'".to_string(),
-                    hint: "Unexpected response from the Kubernetes API server".to_string(),
-                    url: URL.to_string(),
-                })?;
+        let expires_at = chrono::DateTime::from_timestamp(expiration_timestamp.0.as_second(), 0)
+            .ok_or_else(|| FnoxError::ProviderInvalidResponse {
+                provider: PROVIDER.to_string(),
+                details: "Response has an invalid 'expirationTimestamp'".to_string(),
+                hint: "Unexpected response from the Kubernetes API server".to_string(),
+                url: URL.to_string(),
+            })?;
 
         let mut credentials = IndexMap::new();
-        credentials.insert(self.env_var.clone(), status.token);
+        credentials.insert(self.env_var.clone(), token);
 
         Ok(Lease {
             credentials,

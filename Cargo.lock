@@ -123,7 +123,7 @@ dependencies = [
  "rsa",
  "rust-embed",
  "scrypt",
- "sha2 0.11.1",
+ "sha2 0.11.2",
  "sha3",
  "subtle",
  "which",
@@ -147,7 +147,7 @@ dependencies = [
  "nom 8.0.0",
  "rand 0.10.4",
  "secrecy",
- "sha2 0.11.1",
+ "sha2 0.11.2",
  "tempfile",
 ]
 
@@ -1102,7 +1102,7 @@ checksum = "144e573728da132683b9488acd528274c790e07fc06ff81ee29f9d8f8b1041e0"
 dependencies = [
  "blowfish",
  "pbkdf2",
- "sha2 0.11.1",
+ "sha2 0.11.2",
 ]
 
 [[package]]
@@ -3388,7 +3388,7 @@ dependencies = [
  "p384",
  "p521",
  "rand_core 0.10.1",
- "sha2 0.11.1",
+ "sha2 0.11.2",
  "sha3",
  "shake",
  "subtle",
@@ -6383,7 +6383,7 @@ dependencies = [
  "pkcs1",
  "pkcs8 0.11.0",
  "rand_core 0.10.1",
- "sha2 0.11.1",
+ "sha2 0.11.2",
  "signature 3.0.0",
  "spki 0.8.1",
  "zeroize",
@@ -6715,7 +6715,7 @@ dependencies = [
  "cfg-if",
  "pbkdf2",
  "salsa20",
- "sha2 0.11.1",
+ "sha2 0.11.2",
 ]
 
 [[package]]
